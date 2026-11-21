@@ -6,29 +6,36 @@
   <title>Фокус — Трекер внимания</title>
   <style>
     :root {
-      --bg: #FAFAFA; --card: #FFFFFF; --text: #111111; --muted: #666666;
-      --border: #E5E5E5; --primary: #111111; --primary-text: #FFFFFF; --secondary: #EFEFEF;
+      --bg: #FAFAFA;
+      --card: #FFFFFF;
+      --text: #111111;
+      --muted: #666666;
+      --border: #E5E5E5;
+      --primary: #111111;
+      --primary-text: #FFFFFF;
+      --secondary: #EFEFEF;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; }
     .app-container { width: 100%; max-width: 440px; padding: 24px; display: flex; flex-direction: column; justify-content: center; min-height: 100vh; }
     .screen { display: none; flex-direction: column; }
     .screen.active { display: flex; }
-    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 36px; }
     h1 { font-size: 38px; font-weight: 800; margin-bottom: 8px; }
     h2 { font-size: 26px; font-weight: 700; }
-    .subtitle { font-size: 16px; color: var(--muted); line-height: 1.4; margin-bottom: 32px; }
+    .subtitle { font-size: 16px; color: var(--muted); line-height: 1.4; margin-bottom: 28px; }
     .label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; display: block; }
     .greeting { font-size: 17px; font-weight: 500; color: var(--muted); }
-    .link-btn { background: none; border: none; font-size: 16px; font-weight: 600; color: var(--text); cursor: pointer; }
     .sync-badge { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    input, textarea { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; font-size: 16px; color: var(--text); margin-bottom: 16px; outline: none; }
+    .link-btn { background: none; border: none; font-size: 16px; font-weight: 600; color: var(--text); cursor: pointer; }
+    input, textarea { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; font-size: 16px; color: var(--text); margin-bottom: 14px; outline: none; }
     .goal-input { font-size: 24px; font-weight: 600; border: none; border-bottom: 2px solid var(--primary); border-radius: 0; padding: 10px 0; background: transparent; resize: none; }
     .btn { width: 100%; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 600; border: none; cursor: pointer; margin-bottom: 12px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-primary { background: var(--primary); color: var(--primary-text); }
     .btn-secondary { background: var(--secondary); color: var(--text); }
     .btn-ghost { background: transparent; color: var(--muted); font-weight: 500; }
-    .goal-section { margin-bottom: 36px; }
+    .goal-section { margin-bottom: 32px; }
     .goal-text { font-size: 30px; font-weight: 700; line-height: 1.25; margin-bottom: 20px; word-break: break-word; }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
     .stats-row { display: flex; align-items: center; }
@@ -38,9 +45,9 @@
     .divider { width: 1px; height: 40px; background: var(--border); }
     .switch-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     .row-2 { display: flex; gap: 12px; }
-    .checkin-goal { font-size: 20px; font-weight: 700; margin-bottom: 28px; }
-    .checkin-q { font-size: 28px; font-weight: 600; margin-bottom: 32px; line-height: 1.25; }
-    .btn-big { padding: 24px; font-size: 19px; border-radius: 16px; }
+    .checkin-goal { font-size: 20px; font-weight: 700; margin-bottom: 24px; }
+    .checkin-q { font-size: 28px; font-weight: 600; margin-bottom: 28px; line-height: 1.25; }
+    .btn-big { padding: 22px; font-size: 19px; border-radius: 16px; }
   </style>
 </head>
 <body>
@@ -146,16 +153,16 @@
   };
   let timerId = null;
 
-  function getHeaders(extra = {}) {
-    const headers = { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json', ...extra };
-    if (SUPABASE_ANON_KEY.startsWith('eyJ')) {
+  function getHeaders(extra) {
+    const headers = Object.assign({ 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' }, extra || {});
+    if (SUPABASE_ANON_KEY.indexOf('eyJ') === 0) {
       headers['Authorization'] = 'Bearer ' + SUPABASE_ANON_KEY;
     }
     return headers;
   }
 
   function showScreen(name) {
-    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(function(el) { el.classList.remove('active'); });
     document.getElementById('screen-' + name).classList.add('active');
     if (name === 'main') renderMain();
     if (name === 'settings') renderSettings();
@@ -209,3 +216,197 @@
   async function syncFromCloud(userKey) {
     if (SUPABASE_ANON_KEY.length < 15) return false;
     try {
+      const res = await fetch(SUPABASE_URL + '/rest/v1/focus_users?user_key=eq.' + encodeURIComponent(userKey), {
+        headers: getHeaders()
+      });
+      if (!res.ok) return false;
+      const rows = await res.json();
+      const data = rows.at(0);
+      if (!data) return false;
+
+      const today = new Date().toDateString();
+      const sameDay = data.stats_date === today;
+      state.user = { key: data.user_key, name: data.name, email: data.email, isLocal: false };
+      state.goal = data.goal || '';
+      state.stats = {
+        focused: sameDay ? (data.focused || 0) : 0,
+        distracted: sameDay ? (data.distracted || 0) : 0,
+        date: today
+      };
+      state.settings = {
+        isRandom: Boolean(data.is_random),
+        interval: data.interval_min || 60,
+        startHour: data.start_hour || 9,
+        endHour: data.end_hour || 21
+      };
+      localStorage.setItem('focus_app_data', JSON.stringify(state));
+      setSyncStatus('Облако синхронизировано');
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async function handleLogin(isLocal) {
+    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+    const name = document.getElementById('input-name').value.trim();
+    const email = document.getElementById('input-email').value.trim().toLowerCase();
+
+    if (!isLocal && !email) {
+      alert('Введите Email или нажмите «Войти через локальный профиль»');
+      return;
+    }
+
+    const btn = document.getElementById('btn-login');
+    btn.innerText = 'Загрузка...';
+    btn.disabled = true;
+
+    if (isLocal) {
+      state.user = { key: 'local_' + Date.now(), name: name || 'Гость', email: '', isLocal: true };
+      await saveState();
+    } else {
+      const found = await syncFromCloud(email);
+      if (!found) {
+        state.user = { key: email, name: name || email.split('@').at(0), email: email, isLocal: false };
+        await saveState();
+      }
+    }
+
+    btn.innerText = 'Продолжить';
+    btn.disabled = false;
+    showScreen('main');
+    if (!state.goal) toggleGoalEdit(true);
+    startScheduler();
+  }
+
+  function renderMain() {
+    document.getElementById('user-greeting').innerText = 'Привет, ' + (state.user ? state.user.name : 'Гость');
+    document.getElementById('stat-focused').innerText = state.stats.focused;
+    document.getElementById('stat-distracted').innerText = state.stats.distracted;
+    if (state.goal) {
+      document.getElementById('goal-display').innerText = state.goal;
+      toggleGoalEdit(false);
+    } else {
+      toggleGoalEdit(true);
+    }
+  }
+
+  function toggleGoalEdit(edit) {
+    document.getElementById('goal-view-box').style.display = edit ? 'none' : 'block';
+    document.getElementById('goal-edit-box').style.display = edit ? 'block' : 'none';
+    if (edit) {
+      document.getElementById('input-goal').value = state.goal;
+      document.getElementById('input-goal').focus();
+    }
+  }
+
+  async function saveGoal() {
+    const val = document.getElementById('input-goal').value.trim();
+    if (!val) return alert('Введите цель');
+    state.goal = val;
+    renderMain();
+    startScheduler();
+    await saveState();
+  }
+
+  function renderSettings() {
+    document.getElementById('toggle-random').checked = state.settings.isRandom;
+    document.getElementById('input-interval').value = state.settings.interval;
+    document.getElementById('input-start').value = state.settings.startHour;
+    document.getElementById('input-end').value = state.settings.endHour;
+    toggleModeUI();
+  }
+
+  function toggleModeUI() {
+    const r = document.getElementById('toggle-random').checked;
+    document.getElementById('box-interval').style.display = r ? 'none' : 'block';
+    document.getElementById('box-random').style.display = r ? 'block' : 'none';
+    document.getElementById('mode-desc').innerText = r ? 'Вопросы приходят случайно в течение дня' : 'Вопросы приходят строго по таймеру';
+  }
+
+  async function saveSettings() {
+    state.settings = {
+      isRandom: document.getElementById('toggle-random').checked,
+      interval: Math.max(1, parseInt(document.getElementById('input-interval').value) || 60),
+      startHour: parseInt(document.getElementById('input-start').value) || 9,
+      endHour: parseInt(document.getElementById('input-end').value) || 21
+    };
+    startScheduler();
+    showScreen('main');
+    await saveState();
+  }
+
+  function getRandomQuestion() {
+    const q = [
+      'Чем ты сейчас занят?',
+      'На что сейчас направлено твоё внимание?',
+      'Ты сейчас приближаешься к цели: «' + (state.goal || 'Не задана') + '»?'
+    ];
+    return q.at(Math.floor(Math.random() * q.length));
+  }
+
+  function sendPush() {
+    const text = getRandomQuestion();
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const n = new Notification('Проверка фокуса', { body: text });
+      n.onclick = function() { window.focus(); showScreen('checkin'); n.close(); };
+    } else {
+      showScreen('checkin');
+    }
+  }
+
+  function startScheduler() {
+    if (timerId) clearTimeout(timerId);
+    if (!state.goal) return;
+    if (!state.settings.isRandom) {
+      timerId = setTimeout(function() { sendPush(); startScheduler(); }, state.settings.interval * 60000);
+    } else {
+      const mins = Math.floor(Math.random() * 76) + 15;
+      timerId = setTimeout(function() {
+        const h = new Date().getHours();
+        if (h >= state.settings.startHour && h < state.settings.endHour) sendPush();
+        startScheduler();
+      }, mins * 60000);
+    }
+  }
+
+  function renderCheckin() {
+    document.getElementById('checkin-goal-display').innerText = state.goal || 'Цель не задана';
+    document.getElementById('checkin-question').innerText = getRandomQuestion();
+  }
+
+  async function recordCheckin(focused) {
+    const today = new Date().toDateString();
+    if (state.stats.date !== today) state.stats = { focused: 0, distracted: 0, date: today };
+    if (focused) state.stats.focused++; else state.stats.distracted++;
+    showScreen('main');
+    await saveState();
+  }
+
+  document.getElementById('btn-login').onclick = function() { handleLogin(false); };
+  document.getElementById('btn-local').onclick = function() { handleLogin(true); };
+  document.getElementById('btn-open-settings').onclick = function() { showScreen('settings'); };
+  document.getElementById('btn-close-settings').onclick = function() { showScreen('main'); };
+  document.getElementById('btn-edit-goal').onclick = function() { toggleGoalEdit(true); };
+  document.getElementById('btn-save-goal').onclick = saveGoal;
+  document.getElementById('btn-open-checkin').onclick = function() { showScreen('checkin'); };
+  document.getElementById('btn-logout').onclick = function() { localStorage.removeItem('focus_app_data'); state.user = null; showScreen('onboarding'); };
+  document.getElementById('toggle-random').onchange = toggleModeUI;
+  document.getElementById('btn-save-settings').onclick = saveSettings;
+  document.getElementById('btn-test-notif').onclick = function() { setTimeout(sendPush, 3000); };
+  document.getElementById('btn-checkin-focus').onclick = function() { recordCheckin(true); };
+  document.getElementById('btn-checkin-distracted').onclick = function() { recordCheckin(false); };
+
+  (async function start() {
+    const saved = localStorage.getItem('focus_app_data');
+    if (saved) state = Object.assign({}, state, JSON.parse(saved));
+    if (state.user && !state.user.isLocal) await syncFromCloud(state.user.key);
+    if (state.user) {
+      renderMain();
+      showScreen('main');
+      startScheduler();
+    }
+  })();
+</script>
+</body>
+</html>
