@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Фокус — Трекер внимания</title>
+  <!-- Подключаем клиент Supabase -->
+  <script src="https://jsdelivr.net"></script>
   <style>
     :root {
       --bg: #FAFAFA;
@@ -48,9 +50,7 @@
       animation: fadeIn 0.2s ease-in-out;
     }
 
-    .screen.active {
-      display: flex;
-    }
+    .screen.active { display: flex; }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(4px); }
@@ -67,9 +67,10 @@
     h1 { font-size: 38px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
     h2 { font-size: 26px; font-weight: 700; }
     .subtitle { font-size: 16px; color: var(--muted); line-height: 1.4; margin-bottom: 32px; }
-    .label { font-size: 11px; font-weight: 700; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; display: block; }
+    .label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; display: block; }
     .greeting { font-size: 17px; font-weight: 500; color: var(--muted); }
     .link-btn { background: none; border: none; font-size: 16px; font-weight: 600; color: var(--text); cursor: pointer; }
+    .sync-badge { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
     input[type="text"], input[type="email"], input[type="number"], textarea {
       width: 100%;
@@ -111,6 +112,7 @@
     }
 
     .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-primary { background: var(--primary); color: var(--primary-text); }
     .btn-secondary { background: var(--secondary); color: var(--text); }
     .btn-ghost { background: transparent; color: var(--muted); font-weight: 500; }
@@ -147,7 +149,7 @@
     input:checked + .slider:before { transform: translateX(22px); }
 
     .row-2 { display: flex; gap: 12px; }
-    .hint { font-size: 12px; color: #888; margin-top: -8px; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: -8px; }
 
     .checkin-goal { font-size: 20px; font-weight: 700; margin-bottom: 28px; }
     .checkin-q { font-size: 28px; font-weight: 600; margin-bottom: 32px; line-height: 1.25; }
@@ -158,22 +160,25 @@
 
 <div class="app-container">
 
-  <!-- 1. ЭКРАН ПРИВЕТСТВИЯ (active по умолчанию) -->
+  <!-- 1. ЭКРАН ПРИВЕТСТВИЯ -->
   <div id="screen-onboarding" class="screen active">
     <h1>Фокус.</h1>
-    <p class="subtitle">Минималистичный трекер внимания. Одна цель. Ничего лишнего.</p>
+    <p class="subtitle">Минималистичный трекер внимания. Укажите Email, чтобы синхронизировать прогресс между устройствами.</p>
 
     <input type="text" id="input-name" placeholder="Ваше имя" />
-    <input type="email" id="input-email" placeholder="Email (необязательно)" />
+    <input type="email" id="input-email" placeholder="Email (для облачной синхронизации)" />
 
-    <button class="btn btn-primary" onclick="login(false)">Продолжить</button>
+    <button id="btn-login" class="btn btn-primary" onclick="login(false)">Продолжить</button>
     <button class="btn btn-ghost" onclick="login(true)">Войти через локальный профиль</button>
   </div>
 
   <!-- 2. ГЛАВНЫЙ ЭКРАН -->
   <div id="screen-main" class="screen">
     <div class="header-row">
-      <span class="greeting" id="user-greeting">Привет</span>
+      <div>
+        <div class="greeting" id="user-greeting">Привет</div>
+        <div class="sync-badge" id="sync-status">Синхронизировано</div>
+      </div>
       <button class="link-btn" onclick="showScreen('settings')">Настройки</button>
     </div>
 
@@ -207,6 +212,7 @@
     </div>
 
     <button class="btn btn-ghost" onclick="showScreen('checkin')">Сделать чекин прямо сейчас</button>
+    <button class="btn btn-ghost" style="font-size: 13px; margin-top: -8px;" onclick="logout()">Сменить аккаунт</button>
   </div>
 
   <!-- 3. ЭКРАН НАСТРОЕК -->
@@ -263,37 +269,11 @@
 </div>
 
 <script>
-  let state = {
-    user: null,
-    goal: '',
-    stats: { focused: 0, distracted: 0, date: new Date().toDateString() },
-    settings: { isRandom: false, interval: 60, startHour: 9, endHour: 21 }
-  };
+  // ================= НАСТРОЙКИ SUPABASE =================
+  const SUPABASE_URL = 'ВСТАВЬТЕ_СЮДА_PROJECT_URL';
+  const SUPABASE_ANON_KEY = 'ВСТАВЬТЕ_СЮДА_ANON_PUBLIC_KEY';
 
-  let timerId = null;
-
-  function initApp() {
-    loadState();
-
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('checkin') === '1' && state.user) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-      showScreen('checkin');
-      return;
-    }
-
-    if (state.user) {
-      renderMain();
-      showScreen('main');
-      startScheduler();
-    } else {
-      showScreen('onboarding');
-    }
+  let sb = null;
+  if (SUPABASE_URL.startsWith('http') && window.supabase) {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
-
-  document.addEventListener('DOMContentLoaded', initApp);
-
-  function loadState() {
-    try {
-      const saved = localStorage.getItem('focus_app_data');
-      if (saved) {
