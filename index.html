@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Фокус — Трекер внимания</title>
+  <style>
+    :root {
+      --bg: #FAFAFA;
+      --card: #FFFFFF;
+      --text: #111111;
+      --muted: #666666;
+      --border: #E5E5E5;
+      --primary: #111111;
+      --primary-text: #FFFFFF;
+      --secondary: #EFEFEF;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 440px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Типографика */
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+
+    h1 { font-size: 38px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+    h2 { font-size: 26px; font-weight: 700; }
+    .subtitle { font-size: 16px; color: var(--muted); line-height: 1.4; margin-bottom: 32px; }
+    .label { font-size: 11px; font-weight: 700; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; display: block; }
+    .greeting { font-size: 17px; font-weight: 500; color: var(--muted); }
+    .link-btn { background: none; border: none; font-size: 16px; font-weight: 600; color: var(--text); cursor: pointer; }
+
+    /* Поля ввода */
+    input[type="text"], input[type="email"], input[type="number"], textarea {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--primary);
+    }
+
+    .goal-input {
+      font-size: 24px !important;
+      font-weight: 600;
+      border: none !important;
+      border-bottom: 2px solid var(--primary) !important;
+      border-radius: 0 !important;
+      padding: 10px 0 !important;
+      background: transparent !important;
+      resize: none;
+    }
+
+    /* Кнопки */
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      text-align: center;
+      margin-bottom: 12px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--primary); color: var(--primary-text); }
+    .btn-secondary { background: var(--secondary); color: var(--text); }
+    .btn-ghost { background: transparent; color: var(--muted); font-weight: 500; }
+
+    /* Блок цели */
+    .goal-section { margin-bottom: 36px; }
+    .goal-text { font-size: 30px; font-weight: 700; line-height: 1.25; margin-bottom: 20px; word-break: break-word; }
+
+    /* Карточки и статистика */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .stats-row { display: flex; align-items: center; }
+    .stat-box { flex: 1; text-align: center; }
+    .stat-num { font-size: 32px; font-weight: 700; }
+    .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .divider { width: 1px; height: 40px; background: var(--border); }
+
+    /* Переключатель */
+    .switch-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .switch { position: relative; display: inline-block; width: 50px; height: 28px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #E0E0E0; transition: .3s; border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px;
+      background-color: white; transition: .3s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    .row-2 { display: flex; gap: 12px; }
+    .hint { font-size: 12px; color: #888; margin-top: -8px; }
+
+    /* Экран чекина */
+    .checkin-goal { font-size: 20px; font-weight: 700; margin-bottom: 28px; }
+    .checkin-q { font-size: 28px; font-weight: 600; margin-bottom: 32px; line-height: 1.25; }
+    .btn-big { padding: 24px; font-size: 19px; border-radius: 16px; }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- 1. ЭКРАН ПРИВЕТСТВИЯ -->
+  <div id="screen-onboarding" class="screen">
+    <h1>Фокус.</h1>
+    <p class="subtitle">Минималистичный трекер внимания. Одна цель. Ничего лишнего.</p>
+
+    <input type="text" id="input-name" placeholder="Ваше имя" />
+    <input type="email" id="input-email" placeholder="Email (необязательно)" />
+
+    <button class="btn btn-primary" onclick="login(false)">Продолжить</button>
+    <button class="btn btn-ghost" onclick="login(true)">Войти через локальный профиль</button>
+  </div>
+
+  <!-- 2. ГЛАВНЫЙ ЭКРАН -->
+  <div id="screen-main" class="screen">
+    <div class="header-row">
+      <span class="greeting" id="user-greeting">Привет</span>
+      <button class="link-btn" onclick="showScreen('settings')">Настройки</button>
+    </div>
+
+    <div class="goal-section">
+      <span class="label">Главная цель сейчас</span>
+
+      <!-- Режим просмотра цели -->
+      <div id="goal-view-box">
+        <div class="goal-text" id="goal-display">Не задана</div>
+        <button class="btn btn-secondary" onclick="toggleGoalEdit(true)">Изменить цель</button>
+      </div>
+
+      <!-- Режим редактирования цели -->
+      <div id="goal-edit-box" style="display: none;">
+        <textarea id="input-goal" class="goal-input" rows="2" placeholder="Например: Учить английский"></textarea>
+        <button class="btn btn-primary" onclick="saveGoal()">Сохранить цель</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label">Статистика за сегодня</span>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-num" id="stat-focused">0</div>
+          <div class="stat-label">В фокусе</div>
+        </div>
+        <div class="divider"></div>
+        <div class="stat-box">
+          <div class="stat-num" id="stat-distracted">0</div>
+          <div class="stat-label">Отвлёкся</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost" onclick="showScreen('checkin')">Сделать чекин прямо сейчас</button>
+  </div>
+
+  <!-- 3. ЭКРАН НАСТРОЕК -->
+  <div id="screen-settings" class="screen">
+    <div class="header-row">
+      <h2>Настройки</h2>
+      <button class="link-btn" onclick="showScreen('main')">Закрыть</button>
+    </div>
+
+    <div class="card">
+      <div class="switch-row">
+        <div>
+          <div style="font-weight: 600; margin-bottom: 4px;">Случайные напоминания</div>
+          <div style="font-size: 13px; color: var(--muted);" id="mode-desc">
+            Вопросы приходят строго по таймеру
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-random" onchange="toggleModeUI()">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card" id="box-interval">
+      <span class="label">Интервал (в минутах)</span>
+      <input type="number" id="input-interval" value="60" min="1" placeholder="60" />
+    </div>
+
+    <div class="card" id="box-random" style="display: none;">
+      <span class="label">Часы активности (с — до)</span>
+      <div class="row-2">
+        <input type="number" id="input-start" value="9" min="0" max="23" placeholder="9" />
+        <input type="number" id="input-end" value="21" min="1" max="24" placeholder="21" />
+      </div>
+      <div class="hint">Формат 24 часа (например, с 9 до 21)</div>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveSettings()">Сохранить настройки</button>
+    <button class="btn btn-secondary" onclick="testNotification()">Тест уведомления (через 3 сек)</button>
+  </div>
+
+  <!-- 4. ЭКРАН БЫСТРОГО ЧЕКИНА -->
+  <div id="screen-checkin" class="screen">
+    <span class="label">Текущая цель</span>
+    <div class="checkin-goal" id="checkin-goal-display">Цель не задана</div>
+
+    <div class="checkin-q" id="checkin-question">Где сейчас твоё внимание?</div>
+
+    <button class="btn btn-primary btn-big" onclick="recordCheckin(true)">Я в фокусе</button>
+    <button class="btn btn-secondary btn-big" onclick="recordCheckin(false)">Отвлёкся, возвращаюсь</button>
+  </div>
+
+</div>
+
+<script>
+  // --- СОСТОЯНИЕ ПРИЛОЖЕНИЯ ---
+  let state = {
+    user: null,
+    goal: '',
+    stats: { focused: 0, distracted: 0, date: new Date().toDateString() },
+    settings: { isRandom: false, interval: 60, startHour: 9, endHour: 21 }
+  };
+
+  let timerId = null;
+
+  // --- ИНИЦИАЛИЗАЦИЯ ---
+  window.onload = () => {
+    loadState();
+
+    // Проверка на переход по пуш-уведомлению (?checkin=1)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('checkin') === '1' && state.user) {
+      window.history.replaceState({}, document.title, window.location.pathname);
