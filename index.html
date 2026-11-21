@@ -57,7 +57,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Типографика */
     .header-row {
       display: flex;
       justify-content: space-between;
@@ -72,7 +71,6 @@
     .greeting { font-size: 17px; font-weight: 500; color: var(--muted); }
     .link-btn { background: none; border: none; font-size: 16px; font-weight: 600; color: var(--text); cursor: pointer; }
 
-    /* Поля ввода */
     input[type="text"], input[type="email"], input[type="number"], textarea {
       width: 100%;
       background: var(--card);
@@ -86,9 +84,7 @@
       transition: border-color 0.2s;
     }
 
-    input:focus, textarea:focus {
-      border-color: var(--primary);
-    }
+    input:focus, textarea:focus { border-color: var(--primary); }
 
     .goal-input {
       font-size: 24px !important;
@@ -101,7 +97,6 @@
       resize: none;
     }
 
-    /* Кнопки */
     .btn {
       width: 100%;
       padding: 16px;
@@ -120,11 +115,9 @@
     .btn-secondary { background: var(--secondary); color: var(--text); }
     .btn-ghost { background: transparent; color: var(--muted); font-weight: 500; }
 
-    /* Блок цели */
     .goal-section { margin-bottom: 36px; }
     .goal-text { font-size: 30px; font-weight: 700; line-height: 1.25; margin-bottom: 20px; word-break: break-word; }
 
-    /* Карточки и статистика */
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -139,7 +132,6 @@
     .stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
     .divider { width: 1px; height: 40px; background: var(--border); }
 
-    /* Переключатель */
     .switch-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     .switch { position: relative; display: inline-block; width: 50px; height: 28px; flex-shrink: 0; }
     .switch input { opacity: 0; width: 0; height: 0; }
@@ -157,7 +149,6 @@
     .row-2 { display: flex; gap: 12px; }
     .hint { font-size: 12px; color: #888; margin-top: -8px; }
 
-    /* Экран чекина */
     .checkin-goal { font-size: 20px; font-weight: 700; margin-bottom: 28px; }
     .checkin-q { font-size: 28px; font-weight: 600; margin-bottom: 32px; line-height: 1.25; }
     .btn-big { padding: 24px; font-size: 19px; border-radius: 16px; }
@@ -167,8 +158,8 @@
 
 <div class="app-container">
 
-  <!-- 1. ЭКРАН ПРИВЕТСТВИЯ -->
-  <div id="screen-onboarding" class="screen">
+  <!-- 1. ЭКРАН ПРИВЕТСТВИЯ (active по умолчанию) -->
+  <div id="screen-onboarding" class="screen active">
     <h1>Фокус.</h1>
     <p class="subtitle">Минималистичный трекер внимания. Одна цель. Ничего лишнего.</p>
 
@@ -189,13 +180,11 @@
     <div class="goal-section">
       <span class="label">Главная цель сейчас</span>
 
-      <!-- Режим просмотра цели -->
       <div id="goal-view-box">
         <div class="goal-text" id="goal-display">Не задана</div>
         <button class="btn btn-secondary" onclick="toggleGoalEdit(true)">Изменить цель</button>
       </div>
 
-      <!-- Режим редактирования цели -->
       <div id="goal-edit-box" style="display: none;">
         <textarea id="input-goal" class="goal-input" rows="2" placeholder="Например: Учить английский"></textarea>
         <button class="btn btn-primary" onclick="saveGoal()">Сохранить цель</button>
@@ -274,7 +263,6 @@
 </div>
 
 <script>
-  // --- СОСТОЯНИЕ ПРИЛОЖЕНИЯ ---
   let state = {
     user: null,
     goal: '',
@@ -284,11 +272,28 @@
 
   let timerId = null;
 
-  // --- ИНИЦИАЛИЗАЦИЯ ---
-  window.onload = () => {
+  function initApp() {
     loadState();
 
-    // Проверка на переход по пуш-уведомлению (?checkin=1)
     const params = new URLSearchParams(window.location.search);
     if (params.get('checkin') === '1' && state.user) {
       window.history.replaceState({}, document.title, window.location.pathname);
+      showScreen('checkin');
+      return;
+    }
+
+    if (state.user) {
+      renderMain();
+      showScreen('main');
+      startScheduler();
+    } else {
+      showScreen('onboarding');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', initApp);
+
+  function loadState() {
+    try {
+      const saved = localStorage.getItem('focus_app_data');
+      if (saved) {
