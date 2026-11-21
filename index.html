@@ -143,7 +143,7 @@
 
 <script>
   const SUPABASE_URL = 'https://nowwlvcjdkdusuwybkaw.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vd3dsdmNqZGtkdXN1d3lia2F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUyNTE1ODcsImV4cCI6MjExMDgyNzU4N30.CXTUE-QSV_4GTh_Uaz6716AweWjs6k8vip7w1qelVkk';
+  const SUPABASE_ANON_KEY = 'sb_publishable_lCcge1GapAIN3L3ksT1SUg_mdy_Bw_B';
 
   let state = {
     user: null,
@@ -153,13 +153,13 @@
   };
   let timerId = null;
 
-  function getHeaders(extra) {
-    const headers = Object.assign({ 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' }, extra || {});
-    if (SUPABASE_ANON_KEY.indexOf('eyJ') === 0) {
-      headers['Authorization'] = 'Bearer ' + SUPABASE_ANON_KEY;
-    }
-    return headers;
+    function getHeaders(extra) {
+    return Object.assign({
+      'apikey': SUPABASE_ANON_KEY.trim(),
+      'Content-Type': 'application/json'
+    }, extra || {});
   }
+
 
   function showScreen(name) {
     document.querySelectorAll('.screen').forEach(function(el) { el.classList.remove('active'); });
