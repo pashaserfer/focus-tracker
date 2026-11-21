@@ -166,8 +166,8 @@
     <input type="text" id="input-name" placeholder="Ваше имя" />
     <input type="email" id="input-email" placeholder="Email (для облачной синхронизации)" />
 
-    <button id="btn-login" class="btn btn-primary" onclick="login(false)">Продолжить</button>
-    <button class="btn btn-ghost" onclick="login(true)">Войти через локальный профиль</button>
+    <button id="btn-login" class="btn btn-primary">Продолжить</button>
+    <button id="btn-local" class="btn btn-ghost">Войти через локальный профиль</button>
   </div>
 
   <!-- 2. ГЛАВНЫЙ ЭКРАН -->
@@ -177,7 +177,7 @@
         <div class="greeting" id="user-greeting">Привет</div>
         <div class="sync-badge" id="sync-status">Синхронизировано</div>
       </div>
-      <button class="link-btn" onclick="showScreen('settings')">Настройки</button>
+      <button id="btn-open-settings" class="link-btn">Настройки</button>
     </div>
 
     <div class="goal-section">
@@ -185,12 +185,12 @@
 
       <div id="goal-view-box">
         <div class="goal-text" id="goal-display">Не задана</div>
-        <button class="btn btn-secondary" onclick="toggleGoalEdit(true)">Изменить цель</button>
+        <button id="btn-edit-goal" class="btn btn-secondary">Изменить цель</button>
       </div>
 
       <div id="goal-edit-box" style="display: none;">
         <textarea id="input-goal" class="goal-input" rows="2" placeholder="Например: Учить английский"></textarea>
-        <button class="btn btn-primary" onclick="saveGoal()">Сохранить цель</button>
+        <button id="btn-save-goal" class="btn btn-primary">Сохранить цель</button>
       </div>
     </div>
 
@@ -209,15 +209,15 @@
       </div>
     </div>
 
-    <button class="btn btn-ghost" onclick="showScreen('checkin')">Сделать чекин прямо сейчас</button>
-    <button class="btn btn-ghost" style="font-size: 13px; margin-top: -8px;" onclick="logout()">Сменить аккаунт</button>
+    <button id="btn-open-checkin" class="btn btn-ghost">Сделать чекин прямо сейчас</button>
+    <button id="btn-logout" class="btn btn-ghost" style="font-size: 13px; margin-top: -8px;">Сменить аккаунт</button>
   </div>
 
   <!-- 3. ЭКРАН НАСТРОЕК -->
   <div id="screen-settings" class="screen">
     <div class="header-row">
       <h2>Настройки</h2>
-      <button class="link-btn" onclick="showScreen('main')">Закрыть</button>
+      <button id="btn-close-settings" class="link-btn">Закрыть</button>
     </div>
 
     <div class="card">
@@ -229,7 +229,7 @@
           </div>
         </div>
         <label class="switch">
-          <input type="checkbox" id="toggle-random" onchange="toggleModeUI()">
+          <input type="checkbox" id="toggle-random">
           <span class="slider"></span>
         </label>
       </div>
@@ -249,8 +249,8 @@
       <div class="hint">Формат 24 часа (например, с 9 до 21)</div>
     </div>
 
-    <button class="btn btn-primary" onclick="saveSettings()">Сохранить настройки</button>
-    <button class="btn btn-secondary" onclick="testNotification()">Тест уведомления (через 3 сек)</button>
+    <button id="btn-save-settings" class="btn btn-primary">Сохранить настройки</button>
+    <button id="btn-test-notif" class="btn btn-secondary">Тест уведомления (через 3 сек)</button>
   </div>
 
   <!-- 4. ЭКРАН БЫСТРОГО ЧЕКИНА -->
@@ -260,8 +260,8 @@
 
     <div class="checkin-q" id="checkin-question">Где сейчас твоё внимание?</div>
 
-    <button class="btn btn-primary btn-big" onclick="recordCheckin(true)">Я в фокусе</button>
-    <button class="btn btn-secondary btn-big" onclick="recordCheckin(false)">Отвлёкся, возвращаюсь</button>
+    <button id="btn-checkin-focus" class="btn btn-primary btn-big">Я в фокусе</button>
+    <button id="btn-checkin-distracted" class="btn btn-secondary btn-big">Отвлёкся, возвращаюсь</button>
   </div>
 
 </div>
@@ -278,4 +278,11 @@
     stats: { focused: 0, distracted: 0, date: new Date().toDateString() },
     settings: { isRandom: false, interval: 60, startHour: 9, endHour: 21 }
   };
+
+  let timerId = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    bindEvents();
+    await initApp();
+  });
 
