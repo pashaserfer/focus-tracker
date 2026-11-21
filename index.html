@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Фокус — Трекер внимания</title>
-  <!-- Подключаем клиент Supabase -->
-  <script src="https://jsdelivr.net"></script>
   <style>
     :root {
       --bg: #FAFAFA;
@@ -270,10 +268,14 @@
 
 <script>
   // ================= НАСТРОЙКИ SUPABASE =================
-  const SUPABASE_URL = 'https://nowwlvcjdkdusuwybkaw.supabase.co';
+  const SUPABASE_URL = 'https://supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5vd3dsdmNqZGtkdXN1d3lia2F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUyNTE1ODcsImV4cCI6MjExMDgyNzU4N30.CXTUE-QSV_4GTh_Uaz6716AweWjs6k8vip7w1qelVkk';
+  // ======================================================
 
-  let sb = null;
-  if (SUPABASE_URL.startsWith('http') && window.supabase) {
-    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
+  let state = {
+    user: null,
+    goal: '',
+    stats: { focused: 0, distracted: 0, date: new Date().toDateString() },
+    settings: { isRandom: false, interval: 60, startHour: 9, endHour: 21 }
+  };
+
