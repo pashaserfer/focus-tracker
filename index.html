@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Фокус — Трекер внимания</title>
+<script src="https://telegram.org"></script>
   <style>
     :root {
       --bg: #FAFAFA;
@@ -188,7 +189,8 @@
         body: JSON.stringify({
           user_key: state.user.key,
           name: state.user.name,
-          email: state.user.email,
+          email: state.user.email || '',
+          telegram_id: state.user.telegramId || null,
           goal: state.goal,
           focused: state.stats.focused,
           distracted: state.stats.distracted,
@@ -197,6 +199,7 @@
           interval_min: state.settings.interval,
           start_hour: state.settings.startHour,
           end_hour: state.settings.endHour,
+          next_ping_at: new Date(Date.now() + (state.settings.isRandom ? (Math.floor(Math.random() * 76) + 15) : Math.max(1, state.settings.interval)) * 60000).toISOString(),
           updated_at: new Date().toISOString()
         })
       });
@@ -398,6 +401,31 @@
   document.getElementById('btn-checkin-distracted').onclick = function() { recordCheckin(false); };
 
   (async function start() {
+        const tg = window.Telegram && window.Telegram.WebApp;
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      tg.ready();
+      tg.expand();
+      const tgUser = tg.initDataUnsafe.user;
+      const tgKey = 'tg_' + tgUser.id;
+      document.getElementById('btn-logout').style.display = 'none';
+
+      const found = await syncFromCloud(tgKey);
+      if (!found) {
+        state.user = {
+          key: tgKey,
+          name: tgUser.first_name || 'Пользователь',
+          email: '',
+          telegramId: tgUser.id,
+          isLocal: false
+        };
+        await saveState();
+      }
+      renderMain();
+      showScreen('main');
+      if (!state.goal) toggleGoalEdit(true);
+      return;
+    }
+
     const saved = localStorage.getItem('focus_app_data');
     if (saved) state = Object.assign({}, state, JSON.parse(saved));
     if (state.user && !state.user.isLocal) await syncFromCloud(state.user.key);
